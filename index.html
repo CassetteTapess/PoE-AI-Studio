@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Poe AI Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-window: #14141e;
+            --border-color: #2a2a3a;
+            --border-active: #4a4a6a;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #ec4899, #f59e0b);
+            --gradient-3: linear-gradient(135deg, #10b981, #06b6d4);
+            --gradient-4: linear-gradient(135deg, #f59e0b, #ef4444);
+            --gradient-5: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --window-radius: 12px;
+            --taskbar-height: 56px;
+        }
+
+        .light {
+            --bg-primary: #f0f0f5;
+            --bg-secondary: #e8e8f0;
+            --bg-tertiary: #ffffff;
+            --bg-window: #ffffff;
+            --border-color: #d0d0e0;
+            --border-active: #a0a0c0;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #8a8a9a;
+            --shadow-color: rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Desktop Background */
+        .desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: var(--taskbar-height);
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 70%),
+                var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .desktop::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* Desktop Icons */
+        .desktop-icons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 90px);
+            gap: 10px;
+            z-index: 1;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .desktop-icon:active {
+            transform: scale(0.95);
+        }
+
+        .desktop-icon .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .desktop-icon span {
+            font-size: 11px;
+            color: var(--text-primary);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        /* Window Styles */
+        .window {
+            position: absolute;
+            background: var(--bg-window);
+            border: 1px solid var(--border-color);
+            border-radius: var(--window-radius);
+            box-shadow: 0 10px 40px var(--shadow-color), 0 0 0 1px rgba(255,255,255,0.05) inset;
+            display: flex;
+            flex-direction: column;
+            min-width: 320px;
+            min-height: 250px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .window.active {
+            box-shadow: 0 15px 50px var(--shadow-color), 0 0 0 1px var(--border-active);
+            border-color: var(--border-active);
+        }
+
+        .window.minimized { display: none; }
+
+        .window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100vh - var(--taskbar-height)) !important;
+            border-radius: 0;
+        }
+
+        .window-header {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            height: 42px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            cursor: move;
+            flex-shrink: 0;
+            gap: 10px;
+        }
+
+        .window-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .window-title {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: transparent;
+        }
+
+        .window-btn:hover { color: rgba(0,0,0,0.6); }
+        .window-btn.minimize { background: #f59e0b; }
+        .window-btn.maximize { background: #10b981; }
+        .window-btn.close { background: #ef4444; }
+
+        .window-content {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Resize Handles */
+        .resize-handle { position: absolute; z-index: 10; }
+        .resize-handle.n { top: -4px; left: 10px; right: 10px; height: 8px; cursor: n-resize; }
+        .resize-handle.s { bottom: -4px; left: 10px; right: 10px; height: 8px; cursor: s-resize; }
+        .resize-handle.e { right: -4px; top: 10px; bottom: 10px; width: 8px; cursor: e-resize; }
+        .resize-handle.w { left: -4px; top: 10px; bottom: 10px; width: 8px; cursor: w-resize; }
+        .resize-handle.ne { top: -4px; right: -4px; width: 16px; height: 16px; cursor: ne-resize; }
+        .resize-handle.nw { top: -4px; left: -4px; width: 16px; height: 16px; cursor: nw-resize; }
+        .resize-handle.se { bottom: -4px; right: -4px; width: 16px; height: 16px; cursor: se-resize; }
+        .resize-handle.sw { bottom: -4px; left: -4px; width: 16px; height: 16px; cursor: sw-resize; }
+
+        /* Taskbar */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--taskbar-height);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            z-index: 9999;
+            backdrop-filter: blur(20px);
+        }
+
+        .start-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--gradient-1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .taskbar-apps {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+
+        .taskbar-apps::-webkit-scrollbar { display: none; }
+
+        .taskbar-app {
+            height: 42px;
+            min-width: 42px;
+            padding: 0 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .taskbar-app:hover {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+
+        .taskbar-app.active {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .taskbar-app .icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: white;
+        }
+
+        .taskbar-app .title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .taskbar-app .title { display: block; }
+        }
+
+        .taskbar-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 0 12px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* Start Menu */
+        .start-menu {
+            position: fixed;
+            bottom: calc(var(--taskbar-height) + 10px);
+            left: 10px;
+            width: 320px;
+            max-height: 70vh;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 50px var(--shadow-color);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .start-menu.open {
+            display: flex;
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .start-menu-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .start-menu-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .start-menu-header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .start-menu-apps {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .start-menu-app {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .start-menu-app:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .start-menu-app .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .start-menu-app .info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .start-menu-app .info p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .start-menu-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .start-menu-footer button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .start-menu-footer button:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        /* Common App Styles */
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .app-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .app-toolbar select,
+        .app-toolbar input {
+            height: 34px;
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .app-toolbar select:focus,
+        .app-toolbar input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .app-toolbar button, .btn-primary {
+            height: 34px;
+            padding: 0 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--gradient-1);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .app-toolbar button:hover, .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .app-toolbar button:disabled, .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .app-toolbar button.secondary, .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .app-toolbar button.secondary:hover, .btn-secondary:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .app-body {
+            flex: 1;
+            overflow: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Chat App */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 10px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .chat-message .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .chat-message.user .avatar { background: var(--gradient-2); }
+        .chat-message.bot .avatar { background: var(--gradient-1); }
+
+        .chat-message .content {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .chat-message .content pre {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .chat-message .content code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .chat-message.user .content {
+            background: var(--accent-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.bot .content {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message .content.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+        }
+
+        .chat-input-area textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .chat-input-area button {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gradient-1);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .chat-input-area button:hover { transform: scale(1.05); }
+        .chat-input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Image Generator */
+        .image-output {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .image-output img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-output .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .image-output .placeholder i { font-size: 48px; opacity: 0.5; }
+
+        .image-prompt-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .image-prompt-area textarea {
+            flex: 1;
+            min-height: 60px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+        }
+
+        .image-prompt-area textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Code IDE */
+        .ide-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ide-tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .ide-tab {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .ide-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .ide-tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .ide-split {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .ide-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .ide-editor textarea {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            resize: none;
+            tab-size: 2;
+        }
+
+        .ide-editor textarea:focus { outline: none; }
+
+        .ide-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: white;
+        }
+
+        .ide-preview-header {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ide-preview iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: white;
+        }
+
+        /* Voice App */
+        .voice-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .voice-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .voice-input textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .voice-output {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .voice-output audio {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .voice-output .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+        }
+
+        .voice-output .placeholder i { font-size: 48px; opacity: 0.5; }
+
+        /* File Manager */
+        .file-manager {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .file-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+
+        .file-item.selected {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .file-item .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .file-item .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-item .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-item .file-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .file-item .file-actions {
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .file-item:hover .file-actions { opacity: 1; }
+
+        .file-item .file-actions button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .file-item .file-actions button:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .file-item .file-actions button.delete:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state i { font-size: 64px; opacity: 0.3; }
+        .empty-state p { font-size: 14px; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+            animation: modalIn 0.2s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-body p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .modal-body input, .modal-body textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .modal-body input:focus, .modal-body textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-footer button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .modal-footer .btn-cancel {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .modal-footer .btn-cancel:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .modal-footer .btn-confirm {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+        }
+
+        .modal-footer .btn-confirm:hover {
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .modal-footer .btn-danger {
+            background: var(--error);
+            border: none;
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-spinner.dark {
+            border-color: rgba(99, 102, 241, 0.2);
+            border-top-color: var(--accent-primary);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .desktop-icons { display: none; }
+
+            .window {
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: calc(100vh - var(--taskbar-height)) !important;
+                border-radius: 0;
+                border: none;
+            }
+
+            .window-btn.maximize { display: none; }
+            .resize-handle { display: none; }
+
+            .ide-split { flex-direction: column; }
+
+            .ide-editor {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                max-height: 50%;
+            }
+
+            .start-menu {
+                left: 5px;
+                right: 5px;
+                width: auto;
+            }
+        }
+
+        /* Settings */
+        .settings-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .settings-item:last-child { margin-bottom: 0; }
+
+        .settings-item label {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .settings-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+
+        .api-status.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        /* API Key Management */
+        .api-key-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .api-key-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.15s ease;
+        }
+
+        .api-key-item:hover {
+            border-color: var(--border-active);
+        }
+
+        .api-key-item.configured {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .api-key-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .api-key-item.configured .api-key-icon {
+            background: var(--success);
+        }
+
+        .api-key-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .api-key-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .api-key-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .api-key-value {
+            font-size: 12px;
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        .api-key-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .api-key-actions button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            font-size: 12px;
+        }
+
+        .api-key-actions button:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .api-key-actions button.delete:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .add-key-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .add-key-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .modal-form-group {
+            margin-bottom: 16px;
+        }
+
+        .modal-form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .modal-form-group input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .modal-form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .modal-form-group input.mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .modal-form-group .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Full button styles */
+        .full-btn {
+            width: 100%;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .full-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .full-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop -->
+    <div class="desktop" id="desktop">
+        <div class="desktop-icons">
+            <div class="desktop-icon" onclick="openApp('chat')">
+                <div class="icon" style="background: var(--gradient-1)"><i class="fas fa-comments"></i></div>
+                <span>AI Chat</span>
+            </div>
+            <div class="desktop-icon" onclick="openApp('image')">
+                <div class="icon" style="background: var(--gradient-2)"><i class="fas fa-image"></i></div>
+                <span>Image Gen</span>
+            </div>
+            <div class="desktop-icon" onclick="openApp('code')">
+                <div class="icon" style="background: var(--gradient-3)"><i class="fas fa-code"></i></div>
+                <span>Code IDE</span>
+            </div>
+            <div class="desktop-icon" onclick="openApp('voice')">
+                <div class="icon" style="background: var(--gradient-4)"><i class="fas fa-microphone"></i></div>
+                <span>Voice</span>
+            </div>
+            <div class="desktop-icon" onclick="openApp('files')">
+                <div class="icon" style="background: var(--gradient-5)"><i class="fas fa-folder"></i></div>
+                <span>Files</span>
+            </div>
+            <div class="desktop-icon" onclick="openApp('settings')">
+                <div class="icon" style="background: linear-gradient(135deg, #6b7280, #374151)"><i class="fas fa-cog"></i></div>
+                <span>Settings</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-btn" onclick="toggleStartMenu()">
+            <i class="fas fa-th-large"></i>
+        </button>
+        <div class="taskbar-apps" id="taskbarApps"></div>
+        <div class="taskbar-time" id="taskbarTime"></div>
+    </div>
+
+    <!-- Start Menu -->
+    <div class="start-menu" id="startMenu">
+        <div class="start-menu-header">
+            <h2>Poe AI Studio</h2>
+            <p>Powered by Poe Embed API</p>
+        </div>
+        <div class="start-menu-apps">
+            <div class="start-menu-app" onclick="openApp('chat'); closeStartMenu()">
+                <div class="icon" style="background: var(--gradient-1)"><i class="fas fa-comments"></i></div>
+                <div class="info">
+                    <h3>AI Chat</h3>
+                    <p>Chat with AI models</p>
+                </div>
+            </div>
+            <div class="start-menu-app" onclick="openApp('image'); closeStartMenu()">
+                <div class="icon" style="background: var(--gradient-2)"><i class="fas fa-image"></i></div>
+                <div class="info">
+                    <h3>Image Generator</h3>
+                    <p>Create images with AI</p>
+                </div>
+            </div>
+            <div class="start-menu-app" onclick="openApp('code'); closeStartMenu()">
+                <div class="icon" style="background: var(--gradient-3)"><i class="fas fa-code"></i></div>
+                <div class="info">
+                    <h3>Code IDE</h3>
+                    <p>Write & preview code with AI</p>
+                </div>
+            </div>
+            <div class="start-menu-app" onclick="openApp('voice'); closeStartMenu()">
+                <div class="icon" style="background: var(--gradient-4)"><i class="fas fa-microphone"></i></div>
+                <div class="info">
+                    <h3>Voice Studio</h3>
+                    <p>Text to speech</p>
+                </div>
+            </div>
+            <div class="start-menu-app" onclick="openApp('files'); closeStartMenu()">
+                <div class="icon" style="background: var(--gradient-5)"><i class="fas fa-folder"></i></div>
+                <div class="info">
+                    <h3>File Manager</h3>
+                    <p>Manage your files</p>
+                </div>
+            </div>
+            <div class="start-menu-app" onclick="openApp('settings'); closeStartMenu()">
+                <div class="icon" style="background: linear-gradient(135deg, #6b7280, #374151)"><i class="fas fa-cog"></i></div>
+                <div class="info">
+                    <h3>Settings</h3>
+                    <p>Preferences & about</p>
+                </div>
+            </div>
+        </div>
+        <div class="start-menu-footer">
+            <button onclick="toggleTheme()"><i class="fas fa-moon"></i> Theme</button>
+            <button onclick="showAbout()"><i class="fas fa-info-circle"></i> About</button>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <script>
+        // ==================== Global State ====================
+        const state = {
+            windows: {},
+            activeWindowId: null,
+            windowZIndex: 100,
+            isDragging: false,
+            isResizing: false,
+            dragOffset: { x: 0, y: 0 },
+            resizeStart: { x: 0, y: 0, width: 0, height: 0, left: 0, top: 0 },
+            currentResizeHandle: null,
+            currentWindow: null,
+            files: [
+                { id: 1, name: 'Welcome.txt', type: 'text', content: 'Welcome to Poe AI Studio!\n\nThis is your all-in-one AI workspace.', created: Date.now(), size: 62 },
+                { id: 2, name: 'sample.html', type: 'html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Sample</title>\n</head>\n<body>\n  <h1>Hello World!</h1>\n</body>\n</html>', created: Date.now(), size: 124 },
+                { id: 3, name: 'notes.md', type: 'markdown', content: '# My Notes\n\n- Item 1\n- Item 2\n- Item 3', created: Date.now(), size: 42 }
+            ],
+            nextFileId: 4,
+            chatHistories: {},
+            apiKeys: [
+                { id: 1, name: 'OpenAI', key: '', description: 'GPT models API key' },
+                { id: 2, name: 'Anthropic', key: '', description: 'Claude models API key' },
+                { id: 3, name: 'Google AI', key: '', description: 'Gemini models API key' }
+            ],
+            nextApiKeyId: 4
+        };
+
+        // App Definitions
+        const apps = {
+            chat: { title: 'AI Chat', icon: 'fa-comments', gradient: 'var(--gradient-1)', width: 500, height: 600, content: createChatApp },
+            image: { title: 'Image Generator', icon: 'fa-image', gradient: 'var(--gradient-2)', width: 550, height: 600, content: createImageApp },
+            code: { title: 'Code IDE', icon: 'fa-code', gradient: 'var(--gradient-3)', width: 900, height: 600, content: createCodeApp },
+            voice: { title: 'Voice Studio', icon: 'fa-microphone', gradient: 'var(--gradient-4)', width: 500, height: 500, content: createVoiceApp },
+            files: { title: 'File Manager', icon: 'fa-folder', gradient: 'var(--gradient-5)', width: 550, height: 500, content: createFilesApp },
+            settings: { title: 'Settings', icon: 'fa-cog', gradient: 'linear-gradient(135deg, #6b7280, #374151)', width: 500, height: 550, content: createSettingsApp }
+        };
+
+        // ==================== Initialization ====================
+        function init() {
+            // Theme detection
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                document.body.classList.add('light');
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                document.body.classList.toggle('light', !event.matches);
+            });
+
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleMouseUp);
+
+            document.addEventListener('click', (e) => {
+                const startMenu = document.getElementById('startMenu');
+                const startBtn = document.querySelector('.start-btn');
+                if (!startMenu.contains(e.target) && !startBtn.contains(e.target)) {
+                    closeStartMenu();
+                }
+            });
+
+            // Register Poe handlers
+            if (window.Poe) {
+                window.Poe.registerHandler('chat-handler', handleChatResponse);
+                window.Poe.registerHandler('image-handler', handleImageResponse);
+                window.Poe.registerHandler('voice-handler', handleVoiceResponse);
+                window.Poe.registerHandler('code-handler', handleCodeResponse);
+            }
+        }
+
+        // ==================== Modal System ====================
+        function showModal(config) {
+            const overlay = document.getElementById('modalOverlay');
+            const modal = document.getElementById('modalContent');
+
+            let footerHtml = '';
+            if (config.buttons) {
+                footerHtml = `<div class="modal-footer">${config.buttons.map(btn =>
+                    `<button class="${btn.class || 'btn-confirm'}" onclick="${btn.onclick}">${btn.text}</button>`
+                ).join('')}</div>`;
+            }
+
+            modal.innerHTML = `
+                <div class="modal-header"><h3>${config.title}</h3></div>
+                <div class="modal-body">${config.body}</div>
+                ${footerHtml}
+            `;
+
+            overlay.classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function showAlert(title, message) {
+            showModal({
+                title,
+                body: `<p>${message}</p>`,
+                buttons: [{ text: 'OK', onclick: 'closeModal()' }]
+            });
+        }
+
+        function showPrompt(title, message, defaultValue, callback) {
+            const callbackId = 'promptCallback_' + Date.now();
+            window[callbackId] = (value) => {
+                delete window[callbackId];
+                closeModal();
+                if (callback) callback(value);
+            };
+
+            showModal({
+                title,
+                body: `<p>${message}</p><input type="text" id="promptInput" value="${defaultValue || ''}" onkeydown="if(event.key==='Enter'){${callbackId}(this.value)}">`,
+                buttons: [
+                    { text: 'Cancel', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'OK', onclick: `${callbackId}(document.getElementById('promptInput').value)` }
+                ]
+            });
+
+            setTimeout(() => document.getElementById('promptInput')?.focus(), 100);
+        }
+
+        function showConfirm(title, message, callback) {
+            const callbackId = 'confirmCallback_' + Date.now();
+            window[callbackId] = () => {
+                delete window[callbackId];
+                closeModal();
+                if (callback) callback();
+            };
+
+            showModal({
+                title,
+                body: `<p>${message}</p>`,
+                buttons: [
+                    { text: 'Cancel', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'Confirm', class: 'btn-danger', onclick: `${callbackId}()` }
+                ]
+            });
+        }
+
+        // ==================== Window Management ====================
+        function openApp(appId) {
+            if (state.windows[appId]) {
+                const win = document.getElementById(`window-${appId}`);
+                if (win.classList.contains('minimized')) {
+                    win.classList.remove('minimized');
+                }
+                focusWindow(appId);
+                return;
+            }
+
+            const app = apps[appId];
+            const desktop = document.getElementById('desktop');
+            const desktopRect = desktop.getBoundingClientRect();
+            const isMobile = window.innerWidth <= 768;
+
+            let left = isMobile ? 0 : Math.max(50, (desktopRect.width - app.width) / 2 + (Object.keys(state.windows).length * 30));
+            let top = isMobile ? 0 : Math.max(30, (desktopRect.height - app.height) / 2 + (Object.keys(state.windows).length * 30));
+
+            const win = document.createElement('div');
+            win.className = 'window active';
+            win.id = `window-${appId}`;
+            win.style.cssText = `left:${left}px;top:${top}px;width:${app.width}px;height:${app.height}px;z-index:${++state.windowZIndex}`;
+
+            win.innerHTML = `
+                <div class="window-header" onmousedown="startDrag(event, '${appId}')" ontouchstart="startDrag(event, '${appId}')">
+                    <div class="window-icon" style="background: ${app.gradient}"><i class="fas ${app.icon}"></i></div>
+                    <div class="window-title">${app.title}</div>
+                    <div class="window-controls">
+                        <button class="window-btn minimize" onclick="minimizeWindow('${appId}')"><i class="fas fa-minus"></i></button>
+                        <button class="window-btn maximize" onclick="maximizeWindow('${appId}')"><i class="fas fa-expand"></i></button>
+                        <button class="window-btn close" onclick="closeWindow('${appId}')"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="window-content" id="content-${appId}"></div>
+                <div class="resize-handle n" onmousedown="startResize(event, '${appId}', 'n')"></div>
+                <div class="resize-handle s" onmousedown="startResize(event, '${appId}', 's')"></div>
+                <div class="resize-handle e" onmousedown="startResize(event, '${appId}', 'e')"></div>
+                <div class="resize-handle w" onmousedown="startResize(event, '${appId}', 'w')"></div>
+                <div class="resize-handle ne" onmousedown="startResize(event, '${appId}', 'ne')"></div>
+                <div class="resize-handle nw" onmousedown="startResize(event, '${appId}', 'nw')"></div>
+                <div class="resize-handle se" onmousedown="startResize(event, '${appId}', 'se')"></div>
+                <div class="resize-handle sw" onmousedown="startResize(event, '${appId}', 'sw')"></div>
+            `;
+
+            win.addEventListener('mousedown', () => focusWindow(appId));
+            desktop.appendChild(win);
+
+            state.windows[appId] = { id: appId, minimized: false, maximized: false };
+            app.content(document.getElementById(`content-${appId}`), appId);
+            updateTaskbar();
+            focusWindow(appId);
+        }
+
+        function focusWindow(windowId) {
+            document.querySelectorAll('.window').forEach(w => w.classList.remove('active'));
+            const win = document.getElementById(`window-${windowId}`);
+            if (win) {
+                win.classList.add('active');
+                win.style.zIndex = ++state.windowZIndex;
+            }
+            state.activeWindowId = windowId;
+            updateTaskbar();
+        }
+
+        function minimizeWindow(windowId) {
+            const win = document.getElementById(`window-${windowId}`);
+            if (win) {
+                win.classList.add('minimized');
+                state.windows[windowId].minimized = true;
+                updateTaskbar();
+            }
+        }
+
+        function maximizeWindow(windowId) {
+            const win = document.getElementById(`window-${windowId}`);
+            if (win) {
+                win.classList.toggle('maximized');
+                state.windows[windowId].maximized = win.classList.contains('maximized');
+            }
+        }
+
+        function closeWindow(windowId) {
+            const win = document.getElementById(`window-${windowId}`);
+            if (win) {
+                win.remove();
+                delete state.windows[windowId];
+                updateTaskbar();
+            }
+        }
+
+        // ==================== Drag & Resize ====================
+        function startDrag(event, windowId) {
+            if (event.target.closest('.window-controls')) return;
+            const win = document.getElementById(`window-${windowId}`);
+            if (win.classList.contains('maximized')) return;
+
+            event.preventDefault();
+            state.isDragging = true;
+            state.currentWindow = win;
+
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+            state.dragOffset = { x: clientX - win.offsetLeft, y: clientY - win.offsetTop };
+            focusWindow(windowId);
+        }
+
+        function startResize(event, windowId, handle) {
+            event.preventDefault();
+            event.stopPropagation();
+            const win = document.getElementById(`window-${windowId}`);
+            if (win.classList.contains('maximized')) return;
+
+            state.isResizing = true;
+            state.currentWindow = win;
+            state.currentResizeHandle = handle;
+
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+            state.resizeStart = { x: clientX, y: clientY, width: win.offsetWidth, height: win.offsetHeight, left: win.offsetLeft, top: win.offsetTop };
+            focusWindow(windowId);
+        }
+
+        function handleMouseMove(event) {
+            if (!state.isDragging && !state.isResizing) return;
+
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+            if (state.isDragging && state.currentWindow) {
+                const desktop = document.getElementById('desktop');
+                let newX = Math.max(0, Math.min(clientX - state.dragOffset.x, desktop.offsetWidth - state.currentWindow.offsetWidth));
+                let newY = Math.max(0, Math.min(clientY - state.dragOffset.y, desktop.offsetHeight - state.currentWindow.offsetHeight));
+                state.currentWindow.style.left = `${newX}px`;
+                state.currentWindow.style.top = `${newY}px`;
+            }
+
+            if (state.isResizing && state.currentWindow) {
+                const dx = clientX - state.resizeStart.x;
+                const dy = clientY - state.resizeStart.y;
+                const handle = state.currentResizeHandle;
+                let { width, height, left, top } = state.resizeStart;
+
+                if (handle.includes('e')) width = Math.max(320, width + dx);
+                if (handle.includes('w')) { width = Math.max(320, width - dx); left = state.resizeStart.left + (state.resizeStart.width - width); }
+                if (handle.includes('s')) height = Math.max(250, height + dy);
+                if (handle.includes('n')) { height = Math.max(250, height - dy); top = state.resizeStart.top + (state.resizeStart.height - height); }
+
+                state.currentWindow.style.width = `${width}px`;
+                state.currentWindow.style.height = `${height}px`;
+                state.currentWindow.style.left = `${left}px`;
+                state.currentWindow.style.top = `${top}px`;
+            }
+        }
+
+        function handleMouseUp() {
+            state.isDragging = false;
+            state.isResizing = false;
+            state.currentWindow = null;
+        }
+
+        function handleTouchMove(event) {
+            if (state.isDragging || state.isResizing) event.preventDefault();
+            handleMouseMove(event);
+        }
+
+        // ==================== Taskbar ====================
+        function updateTaskbar() {
+            const container = document.getElementById('taskbarApps');
+            container.innerHTML = Object.keys(state.windows).map(windowId => {
+                const app = apps[windowId];
+                const isActive = state.activeWindowId === windowId && !state.windows[windowId].minimized;
+                return `
+                    <div class="taskbar-app ${isActive ? 'active' : ''}" onclick="restoreWindow('${windowId}')">
+                        <div class="icon" style="background: ${app.gradient}"><i class="fas ${app.icon}"></i></div>
+                        <span class="title">${app.title}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function restoreWindow(windowId) {
+            const win = document.getElementById(`window-${windowId}`);
+            if (state.windows[windowId].minimized) {
+                win.classList.remove('minimized');
+                state.windows[windowId].minimized = false;
+            }
+            focusWindow(windowId);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('taskbarTime').innerHTML =
+                `${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br>${now.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+        }
+
+        // ==================== Start Menu ====================
+        function toggleStartMenu() { document.getElementById('startMenu').classList.toggle('open'); }
+        function closeStartMenu() { document.getElementById('startMenu').classList.remove('open'); }
+        function toggleTheme() { document.body.classList.toggle('light'); closeStartMenu(); }
+        function showAbout() {
+            showAlert('About Poe AI Studio', 'An all-in-one AI workspace powered by Poe Embed API. Chat with AI, generate images, write code, create voice, and manage files - all in one place!');
+            closeStartMenu();
+        }
+
+        // ==================== Utilities ====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function getFileIcon(type) {
+            const icons = {
+                text: { icon: 'fa-file-lines', color: '#6366f1' },
+                html: { icon: 'fa-html5', color: '#e34c26' },
+                css: { icon: 'fa-css3-alt', color: '#264de4' },
+                javascript: { icon: 'fa-js', color: '#f7df1e' },
+                markdown: { icon: 'fa-file-code', color: '#083fa1' },
+                image: { icon: 'fa-image', color: '#ec4899' },
+                default: { icon: 'fa-file', color: '#6b7280' }
+            };
+            return icons[type] || icons.default;
+        }
+
+        // ==================== Chat App ====================
+        function createChatApp(container, windowId) {
+            container.innerHTML = `
+                <div class="app-container">
+                    <div class="app-toolbar">
+                        <select id="chat-model-${windowId}">
+                            <option value="Claude-Sonnet-4.5" selected>Claude Sonnet 4.5</option>
+                            <option value="GPT-5.1">GPT-5.1</option>
+                            <option value="Gemini-2.5-Flash">Gemini 2.5 Flash</option>
+                            <option value="Grok-4-Fast-Non-Reasoning">Grok 4 Fast</option>
+                        </select>
+                        <button class="secondary" onclick="clearChat('${windowId}')"><i class="fas fa-trash"></i> Clear</button>
+                    </div>
+                    <div class="app-body">
+                        <div class="chat-messages" id="chat-messages-${windowId}">
+                            <div class="chat-message bot">
+                                <div class="avatar"><i class="fas fa-robot"></i></div>
+                                <div class="content">Hello! I'm your AI assistant. How can I help you today?</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <textarea id="chat-input-${windowId}" placeholder="Type your message..." rows="1" onkeydown="handleChatKeydown(event, '${windowId}')"></textarea>
+                            <button onclick="sendChatMessage('${windowId}')" id="chat-send-${windowId}"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const textarea = document.getElementById(`chat-input-${windowId}`);
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        function handleChatKeydown(event, windowId) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage(windowId);
+            }
+        }
+
+        async function sendChatMessage(windowId) {
+            const input = document.getElementById(`chat-input-${windowId}`);
+            const messages = document.getElementById(`chat-messages-${windowId}`);
+            const sendBtn = document.getElementById(`chat-send-${windowId}`);
+            const model = document.getElementById(`chat-model-${windowId}`).value;
+
+            const text = input.value.trim();
+            if (!text || !window.Poe) return;
+
+            messages.innerHTML += `
+                <div class="chat-message user">
+                    <div class="avatar"><i class="fas fa-user"></i></div>
+                    <div class="content">${escapeHtml(text)}</div>
+                </div>
+            `;
+
+            input.value = '';
+            input.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            const loadingId = `loading-${Date.now()}`;
+            messages.innerHTML += `
+                <div class="chat-message bot" id="${loadingId}">
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="content"><span class="loading-spinner dark"></span> <span class="loading-dots">Thinking</span></div>
+                </div>
+            `;
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                await window.Poe.sendUserMessage(`@${model} ${text}`, {
+                    handler: 'chat-handler',
+                    stream: true,
+                    openChat: false,
+                    handlerContext: { windowId, loadingId }
+                });
+            } catch (err) {
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.querySelector('.content').className = 'content error';
+                    loadingEl.querySelector('.content').textContent = 'Error: ' + err.message;
+                }
+                sendBtn.disabled = false;
+            }
+        }
+
+        function handleChatResponse(result, context) {
+            const { windowId, loadingId } = context;
+            const messages = document.getElementById(`chat-messages-${windowId}`);
+            const loadingEl = document.getElementById(loadingId);
+            const sendBtn = document.getElementById(`chat-send-${windowId}`);
+            const msg = result.responses[0];
+
+            if (!loadingEl) return;
+
+            if (msg.status === 'error') {
+                loadingEl.querySelector('.content').className = 'content error';
+                loadingEl.querySelector('.content').textContent = 'Error: ' + (msg.statusText || 'Unknown error');
+                sendBtn.disabled = false;
+            } else {
+                loadingEl.querySelector('.content').innerHTML = marked.parse(msg.content || '');
+                messages.scrollTop = messages.scrollHeight;
+                if (msg.status === 'complete') {
+                    sendBtn.disabled = false;
+                }
+            }
+        }
+
+        function clearChat(windowId) {
+            document.getElementById(`chat-messages-${windowId}`).innerHTML = `
+                <div class="chat-message bot">
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="content">Chat cleared. How can I help you?</div>
+                </div>
+            `;
+        }
+
+        // ==================== Image Generator ====================
+        function createImageApp(container, windowId) {
+            container.innerHTML = `
+                <div class="app-container">
+                    <div class="app-toolbar">
+                        <select id="image-model-${windowId}">
+                            <option value="Imagen-4-Ultra" selected>Imagen 4 Ultra</option>
+                            <option value="Imagen-4-Fast">Imagen 4 Fast</option>
+                            <option value="FLUX-schnell">FLUX Schnell</option>
+                        </select>
+                        <select id="image-aspect-${windowId}">
+                            <option value="1:1" selected>1:1</option>
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                            <option value="4:3">4:3</option>
+                        </select>
+                    </div>
+                    <div class="app-body">
+                        <div class="image-output" id="image-output-${windowId}">
+                            <div class="placeholder">
+                                <i class="fas fa-image"></i>
+                                <span>Generated image will appear here</span>
+                            </div>
+                        </div>
+                        <div class="image-prompt-area">
+                            <textarea id="image-prompt-${windowId}" placeholder="Describe the image you want to create..." rows="2"></textarea>
+                        </div>
+                        <button class="full-btn" style="background: var(--gradient-2);" onclick="generateImage('${windowId}')" id="image-generate-${windowId}">
+                            <i class="fas fa-wand-magic-sparkles"></i> Generate Image
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function generateImage(windowId) {
+            const prompt = document.getElementById(`image-prompt-${windowId}`).value.trim();
+            const model = document.getElementById(`image-model-${windowId}`).value;
+            const aspect = document.getElementById(`image-aspect-${windowId}`).value;
+            const output = document.getElementById(`image-output-${windowId}`);
+            const btn = document.getElementById(`image-generate-${windowId}`);
+
+            if (!prompt) {
+                showAlert('Error', 'Please enter a prompt to generate an image.');
+                return;
+            }
+
+            if (!window.Poe) {
+                showAlert('Error', 'Poe API not available');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+            output.innerHTML = `<div class="placeholder"><span class="loading-spinner dark" style="width:40px;height:40px;border-width:3px"></span><span class="loading-dots">Generating image</span></div>`;
+
+            try {
+                await window.Poe.sendUserMessage(`@${model} ${prompt} --aspect_ratio ${aspect}`, {
+                    handler: 'image-handler',
+                    stream: false,
+                    openChat: false,
+                    handlerContext: { windowId }
+                });
+            } catch (err) {
+                output.innerHTML = `<div class="placeholder" style="color:var(--error)"><i class="fas fa-exclamation-circle"></i><span>${escapeHtml(err.message)}</span></div>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Image';
+            }
+        }
+
+        function handleImageResponse(result, context) {
+            const { windowId } = context;
+            const output = document.getElementById(`image-output-${windowId}`);
+            const btn = document.getElementById(`image-generate-${windowId}`);
+            const msg = result.responses[0];
+
+            if (msg.status === 'error') {
+                output.innerHTML = `<div class="placeholder" style="color:var(--error)"><i class="fas fa-exclamation-circle"></i><span>${msg.statusText || 'Error generating image'}</span></div>`;
+            } else if (msg.status === 'complete') {
+                if (msg.attachments?.length > 0) {
+                    output.innerHTML = `<img src="${msg.attachments[0].url}" alt="Generated image">`;
+                } else {
+                    output.innerHTML = `<div class="placeholder"><i class="fas fa-exclamation-triangle"></i><span>No image in response</span></div>`;
+                }
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Image';
+        }
+
+        // ==================== Code IDE ====================
+        function createCodeApp(container, windowId) {
+            container.innerHTML = `
+                <div class="ide-container">
+                    <div class="app-toolbar">
+                        <select id="code-model-${windowId}">
+                            <option value="Claude-Sonnet-4.5" selected>Claude Sonnet 4.5</option>
+                            <option value="GPT-5.1">GPT-5.1</option>
+                            <option value="Grok-Code-Fast-1">Grok Code Fast</option>
+                        </select>
+                        <button onclick="askCodeAI('${windowId}')"><i class="fas fa-robot"></i> Ask AI</button>
+                        <button class="secondary" onclick="runCode('${windowId}')"><i class="fas fa-play"></i> Run</button>
+                    </div>
+                    <div class="ide-tabs">
+                        <div class="ide-tab active" data-tab="html" onclick="switchCodeTab(this, '${windowId}')"><i class="fab fa-html5"></i> HTML</div>
+                        <div class="ide-tab" data-tab="css" onclick="switchCodeTab(this, '${windowId}')"><i class="fab fa-css3-alt"></i> CSS</div>
+                        <div class="ide-tab" data-tab="js" onclick="switchCodeTab(this, '${windowId}')"><i class="fab fa-js"></i> JS</div>
+                    </div>
+                    <div class="ide-split">
+                        <div class="ide-editor">
+                            <textarea id="code-html-${windowId}" spellcheck="false"><!DOCTYPE html>
+<html>
+<head>
+  <title>My Page</title>
+</head>
+<body>
+  <h1>Hello World!</h1>
+  <p>Start coding...</p>
+</body>
+</html></textarea>
+                            <textarea id="code-css-${windowId}" spellcheck="false" style="display:none">body {
+  font-family: sans-serif;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  min-height: 100vh;
+  color: white;
+}
+
+h1 {
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}</textarea>
+                            <textarea id="code-js-${windowId}" spellcheck="false" style="display:none">// Your JavaScript here
+console.log('Hello from JS!');</textarea>
+                        </div>
+                        <div class="ide-preview">
+                            <div class="ide-preview-header"><i class="fas fa-eye"></i> Live Preview</div>
+                            <iframe id="code-preview-${windowId}" sandbox="allow-scripts"></iframe>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            ['html', 'css', 'js'].forEach(lang => {
+                document.getElementById(`code-${lang}-${windowId}`).addEventListener('input', () => runCode(windowId));
+            });
+
+            setTimeout(() => runCode(windowId), 100);
+        }
+
+        function switchCodeTab(tab, windowId) {
+            tab.parentElement.querySelectorAll('.ide-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const tabName = tab.dataset.tab;
+            ['html', 'css', 'js'].forEach(t => {
+                document.getElementById(`code-${t}-${windowId}`).style.display = t === tabName ? 'block' : 'none';
+            });
+        }
+
+        function runCode(windowId) {
+            const html = document.getElementById(`code-html-${windowId}`).value;
+            const css = document.getElementById(`code-css-${windowId}`).value;
+            const js = document.getElementById(`code-js-${windowId}`).value;
+            const preview = document.getElementById(`code-preview-${windowId}`);
+
+            preview.srcdoc = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html.replace(/<\/?(!DOCTYPE|html|head|body)[^>]*>/gi, '')}<script>${js}<\/script></body></html>`;
+        }
+
+        function askCodeAI(windowId) {
+            showPrompt('Ask AI', 'What would you like the AI to help with?', '', async (question) => {
+                if (!question || !window.Poe) return;
+
+                const model = document.getElementById(`code-model-${windowId}`).value;
+                const html = document.getElementById(`code-html-${windowId}`).value;
+                const css = document.getElementById(`code-css-${windowId}`).value;
+                const js = document.getElementById(`code-js-${windowId}`).value;
+
+                const currentCode = `HTML:\n${html}\n\nCSS:\n${css}\n\nJS:\n${js}`;
+                const promptText = `I have this code:\n\n${currentCode}\n\nRequest: ${question}\n\nPlease provide the updated code. Return ONLY the code in this exact format:\n\`\`\`html\n...\n\`\`\`\n\`\`\`css\n...\n\`\`\`\n\`\`\`javascript\n...\n\`\`\``;
+
+                showModal({
+                    title: 'AI Working...',
+                    body: '<div style="text-align:center;padding:20px"><span class="loading-spinner dark" style="width:40px;height:40px;border-width:3px"></span><p style="margin-top:16px">Generating code...</p></div>',
+                    buttons: []
+                });
+
+                try {
+                    await window.Poe.sendUserMessage(`@${model} ${promptText}`, {
+                        handler: 'code-handler',
+                        stream: false,
+                        openChat: false,
+                        handlerContext: { windowId }
+                    });
+                } catch (err) {
+                    closeModal();
+                    showAlert('Error', err.message);
+                }
+            });
+        }
+
+        function handleCodeResponse(result, context) {
+            const { windowId } = context;
+            closeModal();
+            const msg = result.responses[0];
+
+            if (msg.status === 'error') {
+                showAlert('Error', msg.statusText || 'AI request failed');
+                return;
+            }
+
+            const response = msg.content;
+            const htmlMatch = response.match(/```html\n([\s\S]*?)```/);
+            const cssMatch = response.match(/```css\n([\s\S]*?)```/);
+            const jsMatch = response.match(/```(?:javascript|js)\n([\s\S]*?)```/);
+
+            if (htmlMatch) document.getElementById(`code-html-${windowId}`).value = htmlMatch[1].trim();
+            if (cssMatch) document.getElementById(`code-css-${windowId}`).value = cssMatch[1].trim();
+            if (jsMatch) document.getElementById(`code-js-${windowId}`).value = jsMatch[1].trim();
+
+            runCode(windowId);
+            showAlert('Success', 'Code updated by AI!');
+        }
+
+        // ==================== Voice App ====================
+        function createVoiceApp(container, windowId) {
+            container.innerHTML = `
+                <div class="app-container">
+                    <div class="app-toolbar">
+                        <select id="voice-voice-${windowId}">
+                            <option value="Jessica" selected>Jessica</option>
+                            <option value="Sarah">Sarah</option>
+                            <option value="George">George</option>
+                            <option value="Brian">Brian</option>
+                            <option value="Lily">Lily</option>
+                            <option value="Will">Will</option>
+                        </select>
+                    </div>
+                    <div class="app-body">
+                        <div class="voice-container">
+                            <div class="voice-input">
+                                <textarea id="voice-text-${windowId}" placeholder="Enter text to convert to speech..." rows="5">Hello! This is a test of the text-to-speech system. Welcome to Poe AI Studio!</textarea>
+                            </div>
+                            <div class="voice-output" id="voice-output-${windowId}">
+                                <div class="placeholder">
+                                    <i class="fas fa-volume-up"></i>
+                                    <span>Audio will appear here</span>
+                                </div>
+                            </div>
+                            <button class="full-btn" style="background: var(--gradient-4);" onclick="generateVoice('${windowId}')" id="voice-generate-${windowId}">
+                                <i class="fas fa-microphone"></i> Generate Speech
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function generateVoice(windowId) {
+            const text = document.getElementById(`voice-text-${windowId}`).value.trim();
+            const voice = document.getElementById(`voice-voice-${windowId}`).value;
+            const output = document.getElementById(`voice-output-${windowId}`);
+            const btn = document.getElementById(`voice-generate-${windowId}`);
+
+            if (!text) {
+                showAlert('Error', 'Please enter some text to convert to speech.');
+                return;
+            }
+
+            if (!window.Poe) {
+                showAlert('Error', 'Poe API not available');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+            output.innerHTML = `<div class="placeholder"><span class="loading-spinner dark" style="width:40px;height:40px;border-width:3px"></span><span class="loading-dots">Generating audio</span></div>`;
+
+            try {
+                await window.Poe.sendUserMessage(`@ElevenLabs-v2.5-Turbo ${text} --voice ${voice}`, {
+                    handler: 'voice-handler',
+                    stream: false,
+                    openChat: false,
+                    handlerContext: { windowId }
+                });
+            } catch (err) {
+                output.innerHTML = `<div class="placeholder" style="color:var(--error)"><i class="fas fa-exclamation-circle"></i><span>${escapeHtml(err.message)}</span></div>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-microphone"></i> Generate Speech';
+            }
+        }
+
+        function handleVoiceResponse(result, context) {
+            const { windowId } = context;
+            const output = document.getElementById(`voice-output-${windowId}`);
+            const btn = document.getElementById(`voice-generate-${windowId}`);
+            const msg = result.responses[0];
+
+            if (msg.status === 'error') {
+                output.innerHTML = `<div class="placeholder" style="color:var(--error)"><i class="fas fa-exclamation-circle"></i><span>${msg.statusText || 'Error generating audio'}</span></div>`;
+            } else if (msg.status === 'complete') {
+                if (msg.attachments?.length > 0) {
+                    output.innerHTML = `<audio controls src="${msg.attachments[0].url}"></audio>`;
+                } else {
+                    output.innerHTML = `<div class="placeholder"><i class="fas fa-exclamation-triangle"></i><span>No audio in response</span></div>`;
+                }
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-microphone"></i> Generate Speech';
+        }
+
+        // ==================== File Manager ====================
+        function createFilesApp(container, windowId) {
+            container.innerHTML = `
+                <div class="file-manager">
+                    <div class="app-toolbar">
+                        <button onclick="createNewFile('${windowId}')"><i class="fas fa-plus"></i> New File</button>
+                        <button class="secondary" onclick="refreshFiles('${windowId}')"><i class="fas fa-sync"></i></button>
+                    </div>
+                    <div class="file-list" id="file-list-${windowId}"></div>
+                </div>
+            `;
+            refreshFiles(windowId);
+        }
+
+        function refreshFiles(windowId) {
+            const list = document.getElementById(`file-list-${windowId}`);
+
+            if (state.files.length === 0) {
+                list.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>No files yet<br>Click "New File" to create one</p></div>`;
+                return;
+            }
+
+            list.innerHTML = state.files.map(file => {
+                const icon = getFileIcon(file.type);
+                return `
+                    <div class="file-item" ondblclick="openFile(${file.id})">
+                        <div class="file-icon" style="background: ${icon.color}"><i class="fas ${icon.icon}"></i></div>
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(file.name)}</div>
+                            <div class="file-meta">${formatBytes(file.size)} • ${new Date(file.created).toLocaleDateString()}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button onclick="event.stopPropagation(); editFile(${file.id})"><i class="fas fa-edit"></i></button>
+                            <button onclick="event.stopPropagation(); downloadFile(${file.id})"><i class="fas fa-download"></i></button>
+                            <button class="delete" onclick="event.stopPropagation(); deleteFile(${file.id}, '${windowId}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function createNewFile(windowId) {
+            showPrompt('New File', 'Enter file name:', 'untitled.txt', (name) => {
+                if (!name) return;
+
+                const ext = name.split('.').pop().toLowerCase();
+                const typeMap = { txt: 'text', html: 'html', css: 'css', js: 'javascript', md: 'markdown' };
+
+                state.files.push({
+                    id: state.nextFileId++,
+                    name,
+                    type: typeMap[ext] || 'text',
+                    content: '',
+                    created: Date.now(),
+                    size: 0
+                });
+
+                refreshFiles(windowId);
+            });
+        }
+
+        function openFile(fileId) {
+            const file = state.files.find(f => f.id === fileId);
+            if (!file) return;
+
+            showModal({
+                title: file.name,
+                body: `<textarea id="file-content-${fileId}" style="width:100%;height:200px;font-family:'JetBrains Mono',monospace;font-size:13px;resize:vertical">${escapeHtml(file.content)}</textarea>`,
+                buttons: [
+                    { text: 'Cancel', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'Save', onclick: `saveFileContent(${fileId})` }
+                ]
+            });
+        }
+
+        function saveFileContent(fileId) {
+            const file = state.files.find(f => f.id === fileId);
+            const textarea = document.getElementById(`file-content-${fileId}`);
+            if (file && textarea) {
+                file.content = textarea.value;
+                file.size = new Blob([file.content]).size;
+            }
+            closeModal();
+
+            // Refresh any open file manager
+            Object.keys(state.windows).forEach(wid => {
+                if (wid === 'files') refreshFiles(wid);
+            });
+        }
+
+        function editFile(fileId) {
+            openFile(fileId);
+        }
+
+        function downloadFile(fileId) {
+            const file = state.files.find(f => f.id === fileId);
+            if (!file) return;
+
+            const blob = new Blob([file.content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function deleteFile(fileId, windowId) {
+            const file = state.files.find(f => f.id === fileId);
+            if (!file) return;
+
+            showConfirm('Delete File', `Are you sure you want to delete "${file.name}"?`, () => {
+                state.files = state.files.filter(f => f.id !== fileId);
+                refreshFiles(windowId);
+            });
+        }
+
+        // ==================== Settings App ====================
+        function createSettingsApp(container, windowId) {
+            renderSettingsApp(container, windowId);
+        }
+
+        function renderSettingsApp(container, windowId) {
+            const apiKeysHtml = state.apiKeys.map(key => {
+                const isConfigured = key.key && key.key.length > 0;
+                const maskedKey = isConfigured ? key.key.substring(0, 4) + '••••••••' + key.key.substring(key.key.length - 4) : '';
+                return `
+                    <div class="api-key-item ${isConfigured ? 'configured' : ''}">
+                        <div class="api-key-icon">
+                            <i class="fas ${isConfigured ? 'fa-check' : 'fa-key'}"></i>
+                        </div>
+                        <div class="api-key-info">
+                            <div class="api-key-name">${escapeHtml(key.name)}</div>
+                            <div class="api-key-desc">${escapeHtml(key.description)}</div>
+                            ${isConfigured ? `<div class="api-key-value">${maskedKey}</div>` : ''}
+                        </div>
+                        <div class="api-key-actions">
+                            <button onclick="editApiKey(${key.id}, '${windowId}')" title="${isConfigured ? 'Edit' : 'Add'} Key">
+                                <i class="fas ${isConfigured ? 'fa-edit' : 'fa-plus'}"></i>
+                            </button>
+                            ${isConfigured ? `
+                                <button onclick="toggleApiKeyVisibility(${key.id})" title="View Key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            ` : ''}
+                            <button class="delete" onclick="deleteApiKey(${key.id}, '${windowId}')" title="Remove">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3>Poe Status</h3>
+                        <div class="settings-item">
+                            <div class="api-status connected">
+                                <i class="fas fa-check-circle"></i>
+                                Connected to Poe Embed API
+                            </div>
+                            <p style="margin-top:8px">The app uses Poe's built-in API - no external keys required for basic features.</p>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>External API Keys</h3>
+                        <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">
+                            Store API keys for external services. Keys are stored in memory only and will be cleared on refresh.
+                        </p>
+                        <div class="api-key-list">
+                            ${apiKeysHtml}
+                            <button class="add-key-btn" onclick="addNewApiKey('${windowId}')">
+                                <i class="fas fa-plus"></i> Add New API Key
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Appearance</h3>
+                        <div class="settings-item">
+                            <label>Theme</label>
+                            <button class="btn-secondary" onclick="toggleTheme()" style="align-self:flex-start;height:40px;padding:0 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px">
+                                <i class="fas fa-adjust"></i> Toggle Dark/Light
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>About</h3>
+                        <div class="settings-item">
+                            <p><strong>Poe AI Studio v1.0</strong><br><br>
+                            An all-in-one AI workspace powered by Poe Embed API. Includes AI Chat, Image Generation, Code IDE, Voice Studio, and File Manager.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addNewApiKey(windowId) {
+            showModal({
+                title: 'Add New API Key',
+                body: `
+                    <div class="modal-form-group">
+                        <label>Service Name</label>
+                        <input type="text" id="new-key-name" placeholder="e.g., OpenAI, Hugging Face, etc.">
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Description (optional)</label>
+                        <input type="text" id="new-key-desc" placeholder="What is this key for?">
+                    </div>
+                    <div class="modal-form-group">
+                        <label>API Key</label>
+                        <input type="password" id="new-key-value" class="mono" placeholder="sk-...">
+                        <div class="hint">Your key is stored in memory only and won't persist after refresh.</div>
+                    </div>
+                `,
+                buttons: [
+                    { text: 'Cancel', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'Save Key', onclick: `saveNewApiKey('${windowId}')` }
+                ]
+            });
+
+            setTimeout(() => document.getElementById('new-key-name')?.focus(), 100);
+        }
+
+        function saveNewApiKey(windowId) {
+            const name = document.getElementById('new-key-name').value.trim();
+            const desc = document.getElementById('new-key-desc').value.trim();
+            const key = document.getElementById('new-key-value').value.trim();
+
+            if (!name) {
+                showAlert('Error', 'Please enter a service name.');
+                return;
+            }
+
+            state.apiKeys.push({
+                id: state.nextApiKeyId++,
+                name: name,
+                key: key,
+                description: desc || 'Custom API key'
+            });
+
+            closeModal();
+            const container = document.getElementById(`content-settings`);
+            if (container) renderSettingsApp(container, windowId);
+            showAlert('Success', `API key for "${name}" has been saved.`);
+        }
+
+        function editApiKey(keyId, windowId) {
+            const apiKey = state.apiKeys.find(k => k.id === keyId);
+            if (!apiKey) return;
+
+            showModal({
+                title: `Edit ${apiKey.name} API Key`,
+                body: `
+                    <div class="modal-form-group">
+                        <label>Service Name</label>
+                        <input type="text" id="edit-key-name" value="${escapeHtml(apiKey.name)}">
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Description</label>
+                        <input type="text" id="edit-key-desc" value="${escapeHtml(apiKey.description)}">
+                    </div>
+                    <div class="modal-form-group">
+                        <label>API Key</label>
+                        <input type="password" id="edit-key-value" class="mono" value="${escapeHtml(apiKey.key)}" placeholder="Enter new key or leave unchanged">
+                        <div class="hint">Leave empty to keep existing key, or enter a new one to replace it.</div>
+                    </div>
+                `,
+                buttons: [
+                    { text: 'Cancel', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'Save Changes', onclick: `updateApiKey(${keyId}, '${windowId}')` }
+                ]
+            });
+
+            setTimeout(() => document.getElementById('edit-key-value')?.focus(), 100);
+        }
+
+        function updateApiKey(keyId, windowId) {
+            const apiKey = state.apiKeys.find(k => k.id === keyId);
+            if (!apiKey) return;
+
+            const name = document.getElementById('edit-key-name').value.trim();
+            const desc = document.getElementById('edit-key-desc').value.trim();
+            const key = document.getElementById('edit-key-value').value.trim();
+
+            if (!name) {
+                showAlert('Error', 'Service name cannot be empty.');
+                return;
+            }
+
+            apiKey.name = name;
+            apiKey.description = desc;
+            if (key) apiKey.key = key;
+
+            closeModal();
+            const container = document.getElementById(`content-settings`);
+            if (container) renderSettingsApp(container, windowId);
+            showAlert('Success', `API key for "${name}" has been updated.`);
+        }
+
+        function toggleApiKeyVisibility(keyId) {
+            const apiKey = state.apiKeys.find(k => k.id === keyId);
+            if (!apiKey || !apiKey.key) return;
+
+            showModal({
+                title: `${apiKey.name} API Key`,
+                body: `
+                    <div class="modal-form-group">
+                        <label>Your API Key:</label>
+                        <input type="text" id="view-key-value" class="mono" value="${escapeHtml(apiKey.key)}" readonly onclick="this.select()">
+                        <div class="hint">Click to select, then copy. Do not share your API keys!</div>
+                    </div>
+                `,
+                buttons: [
+                    { text: 'Close', class: 'btn-cancel', onclick: 'closeModal()' },
+                    { text: 'Copy', onclick: `copyApiKeyToClipboard('${escapeHtml(apiKey.key)}')` }
+                ]
+            });
+        }
+
+        function copyApiKeyToClipboard(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                closeModal();
+                showAlert('Copied!', 'API key copied to clipboard.');
+            }).catch(() => {
+                showAlert('Error', 'Failed to copy to clipboard.');
+            });
+        }
+
+        function deleteApiKey(keyId, windowId) {
+            const apiKey = state.apiKeys.find(k => k.id === keyId);
+            if (!apiKey) return;
+
+            showConfirm('Delete API Key', `Are you sure you want to delete the "${apiKey.name}" API key?`, () => {
+                state.apiKeys = state.apiKeys.filter(k => k.id !== keyId);
+                const container = document.getElementById(`content-settings`);
+                if (container) renderSettingsApp(container, windowId);
+            });
+        }
+
+        // Helper to get an API key by name
+        function getApiKey(name) {
+            const key = state.apiKeys.find(k => k.name.toLowerCase() === name.toLowerCase());
+            return key ? key.key : null;
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
